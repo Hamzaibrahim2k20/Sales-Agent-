@@ -45,6 +45,7 @@ async def initiate_call(
             member_type=lead.member_type or "",
             product_interest=lead.product_interest,
             webhook_url=webhook_url,
+            language=lead.language or None,
         )
     except Exception as e:
         raise HTTPException(502, detail=f"Voice provider error: {e}")
@@ -143,6 +144,7 @@ async def _process_bulk_calls(lead_ids: List[str], max_concurrent: int):
                         member_type=lead.member_type or "",
                         product_interest=lead.product_interest,
                         webhook_url=webhook_url,
+                        language=lead.language or None,
                     )
                     lead.call_attempts = (lead.call_attempts or 0) + 1
                     lead.last_call_date = datetime.utcnow()
