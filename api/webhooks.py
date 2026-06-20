@@ -71,9 +71,8 @@ async def test_webhook(payload: dict):
 
 
 def _persist_call_result(result: dict):
-    """Save call result to DB and sync to Google Sheets."""
+    """Save call result to DB and sync to Google Sheets (if configured)."""
     from database import SessionLocal
-    from services.google_sheets import append_call_log, update_lead_status
     from config import settings
 
     db = SessionLocal()
@@ -143,9 +142,10 @@ def _persist_call_result(result: dict):
 
         db.commit()
 
-        # Sync to Google Sheets if configured
+        # Sync to Google Sheets if configured (optional — skip if library broken or not set up)
         if settings.google_sheets_lead_sheet_id:
             try:
+                from services.google_sheets import append_call_log, update_lead_status
                 append_call_log({
                     **result,
                     "call_date": datetime.utcnow().isoformat(),
@@ -161,7 +161,7 @@ def _persist_call_result(result: dict):
                         "lead_score": result.get("lead_score", 0),
                     })
             except Exception as e:
-                logger.warning("Google Sheets sync failed: %s", e)
+                logger.warning("Google Sheets sync skipped: %s", e)
 
     except Exception as e:
         logger.error("Failed to persist call result: %s", e)

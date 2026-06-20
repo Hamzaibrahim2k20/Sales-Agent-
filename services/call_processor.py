@@ -227,44 +227,86 @@ def _retell_status_to_result(status: str) -> str:
 
 
 def _fallback_extraction(transcript: str, call_result: str) -> dict:
-    """Keyword-based fallback if Claude is not configured."""
+    """Keyword-based fallback when Claude API is not configured or unreachable."""
     lower = transcript.lower()
 
     lead_type = "unknown"
-    if any(k in lower for k in ["buy", "import", "sourcing", "looking for", "need"]):
+    if any(k in lower for k in ["buy", "import", "sourcing", "looking for", "need", "require", "purchase"]):
         lead_type = "buyer"
-    if any(k in lower for k in ["sell", "export", "offer", "produce", "manufacture", "sawmill"]):
+    if any(k in lower for k in ["sell", "export", "offer", "produce", "manufacture", "sawmill", "supplier"]):
         lead_type = "seller" if lead_type != "buyer" else "both"
 
     species = []
-    for s in ["pine", "oak", "spruce", "fir", "beech", "eucalyptus", "teak", "poplar", "birch"]:
+    for s in ["pine", "oak", "spruce", "fir", "beech", "eucalyptus", "teak",
+              "poplar", "birch", "cedar", "larch", "hardwood", "softwood", "tropical"]:
         if s in lower:
             species.append(s)
 
     products = []
     for p in ["sawn timber", "logs", "plywood", "panels", "pallets", "veneer", "flooring",
-              "mdf", "osb", "hdf", "lumber", "boards", "beams"]:
+              "mdf", "osb", "hdf", "lumber", "boards", "beams", "pellets", "chips"]:
         if p in lower:
             products.append(p)
 
-    escalation_kws = ["price", "discount", "invoice", "renew", "complaint", "refund", "cancel"]
-    escalation_required = any(k in lower for k in escalation_kws)
+    # Volume hints
+    volume = ""
+    for hint in ["container", "m3", "cbm", "m³", "lorry", "truck"]:
+        if hint in lower:
+            volume = f"See transcript — '{hint}' mentioned"
+            break
 
-    return {
+    # Destination hints
+    destination = ""
+    for market in ["jeddah", "riyadh", "dubai", "karachi", "mumbai", "lagos", "casablanca"]:
+        if market in lower:
+            destination = market.title()
+            break
+
+    escalation_kws = [
+        "price", "cost", "how much", "pricing", "discount", "invoice",
+        "renew", "renewal", "complaint", "refund", "cancel", "cheated",
+        "adverti", "banner", "speak to someone", "your manager",
+    ]
+    escalation_required = any(k in lower for k in escalation_kws)
+    escalation_reason = ""
+    if escalation_required:
+        matched = [k for k in escalation_kws if k in lower]
+        escalation_reason = f"Keyword match in transcript: {', '.join(matched[:3])}"
+
+    score = 10
+    if lead_type != "unknown":
+        score += 20
+    if species:
+        score += 10
+    if products:
+        score += 10
+    if volume:
+        score += 10
+
+    data = {
         "lead_type": lead_type,
         "activity": "",
         "products": products,
         "species": species,
-        "volume": "",
-        "destination_market": "",
+        "volume": volume,
+        "destination_market": destination,
         "origin_preference": "",
-        "urgency": "warm" if lead_type != "unknown" else "cold",
+        "urgency": "warm" if score >= 40 else "cold",
         "membership_potential": "medium" if lead_type != "unknown" else "low",
-        "lead_score": 40 if lead_type != "unknown" else 10,
-        "summary": "Call connected. Manual review recommended.",
-        "next_action": "Manual follow-up required",
+        "lead_score": min(score, 60),
+        "summary": "Call connected. Transcript keywords extracted — add Anthropic API key for full AI analysis.",
+        "next_action": "Manual review recommended" + (" — ESCALATE: pricing/renewal mentioned" if escalation_required else ""),
         "human_escalation_required": escalation_required,
-        "escalation_reason": "Keyword match — manual review" if escalation_required else "",
+        "escalation_reason": escalation_reason,
         "follow_up_date": "",
         "follow_up_message": "",
     }
+
+    # Generate follow-up email even in fallback mode
+    try:
+        from services.follow_up import generate_follow_up
+        data["follow_up_message"] = generate_follow_up(data)
+    except Exception:
+        pass
+
+    return data
