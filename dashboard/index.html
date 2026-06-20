@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fordaq Lead Activation Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">Fordaq <span>Lead Activation Agent</span></div>
+    <div class="header-actions">
+      <button onclick="refreshAll()">Refresh</button>
+      <button onclick="generateReport()">Generate Report</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats Bar -->
+    <section class="stats-bar" id="stats-bar">
+      <div class="stat-card" id="stat-total">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Total Leads</div>
+      </div>
+      <div class="stat-card hot" id="stat-hot">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Hot (80+)</div>
+      </div>
+      <div class="stat-card warm" id="stat-warm">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Warm (50–79)</div>
+      </div>
+      <div class="stat-card" id="stat-escalations">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Escalations</div>
+      </div>
+      <div class="stat-card" id="stat-connected">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Connected</div>
+      </div>
+      <div class="stat-card" id="stat-no-answer">
+        <div class="stat-value">—</div>
+        <div class="stat-label">No Answer</div>
+      </div>
+    </section>
+
+    <div class="two-col">
+      <!-- Hot Leads Table -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Hot Leads</h2>
+          <span class="badge hot">Score ≥ 70</span>
+        </div>
+        <table id="hot-leads-table">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Country</th>
+              <th>Type</th>
+              <th>Score</th>
+              <th>Next Action</th>
+            </tr>
+          </thead>
+          <tbody id="hot-leads-body">
+            <tr><td colspan="5" class="loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Escalations Table -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Pending Escalations</h2>
+          <span class="badge warn">Human Required</span>
+        </div>
+        <table id="escalations-table">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Country</th>
+              <th>Score</th>
+              <th>Reason</th>
+              <th>Phone</th>
+            </tr>
+          </thead>
+          <tbody id="escalations-body">
+            <tr><td colspan="5" class="loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="three-col">
+      <section class="panel">
+        <h2>Lead Types</h2>
+        <div id="lead-type-chart" class="chart-placeholder"></div>
+      </section>
+      <section class="panel">
+        <h2>Top Countries</h2>
+        <div id="country-chart" class="chart-placeholder"></div>
+      </section>
+      <section class="panel">
+        <h2>Membership Potential</h2>
+        <div id="membership-chart" class="chart-placeholder"></div>
+      </section>
+    </div>
+
+    <!-- Call Queue -->
+    <section class="panel full-width">
+      <div class="panel-header">
+        <h2>Call Queue</h2>
+        <div class="queue-actions">
+          <input type="number" id="queue-limit" value="20" min="1" max="200" style="width:60px" />
+          <button onclick="loadQueue()">Load Queue</button>
+          <button class="danger" onclick="confirmBulkCall()">Start Bulk Call</button>
+        </div>
+      </div>
+      <table id="queue-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="select-all" onclick="toggleAll(this)" /></th>
+            <th>Company</th>
+            <th>Country</th>
+            <th>Phone</th>
+            <th>Type</th>
+            <th>Score</th>
+            <th>Urgency</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="queue-body">
+          <tr><td colspan="9" class="loading">Click "Load Queue" to load…</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

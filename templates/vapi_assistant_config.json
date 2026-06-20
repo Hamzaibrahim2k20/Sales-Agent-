@@ -1,0 +1,81 @@
+{
+  "_comment": "Paste this into the Vapi dashboard > Assistants > Create > JSON mode",
+  "name": "Fordaq Lead Activation Agent",
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-2",
+    "language": "en"
+  },
+  "model": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "temperature": 0.4,
+    "maxTokens": 1024,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Fordaq Lead Activation Agent. Your job is to call Fordaq members and help them use Fordaq properly. Fordaq is a B2B timber and wood-products marketplace, directory and information platform. Fordaq connects buyers and sellers but does not act as the buyer, seller, broker, payment guarantor, logistics company or transaction guarantor.\n\nYour goals are:\n1. Understand whether the company is a buyer, seller, importer, exporter, sawmill, trader, manufacturer or service provider.\n2. Collect missing commercial information.\n3. Help the member understand the correct Fordaq action: complete profile, post request, post offer, contact suppliers, contact buyers, or speak with sales.\n4. Identify premium membership, renewal, Active Matching, Microsite or advertising opportunities.\n5. Escalate strong leads or sensitive cases to a human Fordaq team member.\n6. Log every call in structured format.\n\nNever promise guaranteed buyers, guaranteed suppliers, guaranteed payment, guaranteed deals, verified safety, discounts, refunds, or transaction support unless the system explicitly confirms it.\n\nAlways be natural, short, professional and specific to the timber business."
+      }
+    ]
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "21m00Tcm4TlvDq8ikWAM",
+    "stability": 0.5,
+    "similarityBoost": 0.75
+  },
+  "firstMessage": "Hello, this is calling from Fordaq. Am I speaking with the right person at {{company_name}}?",
+  "endCallMessage": "Thank you for speaking with Fordaq. Have a great day. Goodbye.",
+  "endCallPhrases": [
+    "goodbye",
+    "bye",
+    "end call",
+    "stop calling",
+    "do not call again",
+    "remove me"
+  ],
+  "hipaaEnabled": false,
+  "maxDurationSeconds": 600,
+  "backgroundSound": "office",
+  "backchannelingEnabled": true,
+  "backgroundDenoisingEnabled": true,
+  "serverMessages": [
+    "end-of-call-report",
+    "hang",
+    "speech-update",
+    "status-update",
+    "transcript"
+  ],
+  "clientMessages": [
+    "transcript",
+    "hang",
+    "function-call",
+    "speech-update",
+    "metadata",
+    "conversation-update"
+  ],
+  "analysisPlan": {
+    "summaryPrompt": "Summarise the call in 2-3 sentences. Include: what the company does (buyer/seller), what products or species they mentioned, what the next action is, and whether the lead should be escalated to a human Fordaq team member.",
+    "structuredDataPrompt": "Extract the following fields from the call transcript in JSON format: lead_type (buyer/seller/both/unknown), products (list), species (list), volume (string), destination_market (string), origin_preference (string), urgency (hot/warm/cold), membership_potential (high/medium/low), lead_score (0-100), next_action (string), human_escalation_required (boolean), escalation_reason (string).",
+    "structuredDataSchema": {
+      "type": "object",
+      "properties": {
+        "lead_type": { "type": "string", "enum": ["buyer", "seller", "both", "unknown"] },
+        "products": { "type": "array", "items": { "type": "string" } },
+        "species": { "type": "array", "items": { "type": "string" } },
+        "volume": { "type": "string" },
+        "destination_market": { "type": "string" },
+        "origin_preference": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["hot", "warm", "cold"] },
+        "membership_potential": { "type": "string", "enum": ["high", "medium", "low"] },
+        "lead_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "next_action": { "type": "string" },
+        "human_escalation_required": { "type": "boolean" },
+        "escalation_reason": { "type": "string" }
+      },
+      "required": ["lead_type", "urgency", "membership_potential", "lead_score", "human_escalation_required"]
+    },
+    "successEvaluationPrompt": "Was this call successful? A successful call means the agent identified the company type (buyer/seller), collected at least one piece of commercial information (product, species, volume, or market), and ended the call professionally. Answer yes or no.",
+    "successEvaluationRubric": "DescriptiveScale"
+  }
+}
